@@ -8,11 +8,13 @@ const Admin = () => {
   const [tab, setTab] = useState('add');
   const [hotels, setHotels] = useState([]);
   const [flights, setFlights] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
   const [toast, setToast] = useState({ message: '', type: 'success' });
   const [hotelPayload, setHotelPayload] = useState({ title: '', description: '', location: '', pricePerNight: '', totalRooms: '', imageURL: [''] });
-  const [flightPayload, setFlightPayload] = useState({ airline: '', origin: '', destination: '', price: '', departureTime: '', totalSeats: '', imageURL: [''], status: 'Scheduled' });
+  const [flightPayload, setFlightPayload] = useState({ airline: '', origin: '', destination: '', price: '', departureTime: '', journeyTime: '', flightType: 'Domestic', totalSeats: '', imageURL: [''], status: 'Scheduled' });
 
   const loadAdminData = async () => {
     try {
@@ -30,6 +32,25 @@ const Admin = () => {
   useEffect(() => {
     loadAdminData();
   }, []);
+
+  useEffect(() => {
+    if (tab === 'bookings') {
+      loadBookings();
+    }
+  }, [tab]);
+
+  const loadBookings = async () => {
+    try {
+      setBookingsLoading(true);
+      const response = await api.get('/admin/bookings');
+      setBookings(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error(error);
+      setToast({ message: error.response?.data?.message || 'Could not load bookings', type: 'error' });
+    } finally {
+      setBookingsLoading(false);
+    }
+  };
 
   const handleHotelSubmit = async (event) => {
     event.preventDefault();
@@ -56,7 +77,7 @@ const Admin = () => {
         },
       });
       setToast({ message: 'Flight article created successfully', type: 'success' });
-      setFlightPayload({ airline: '', origin: '', destination: '', price: '', departureTime: '', totalSeats: '', imageURL: [''], status: 'Scheduled' });
+      setFlightPayload({ airline: '', origin: '', destination: '', price: '', departureTime: '', journeyTime: '', flightType: 'Domestic', totalSeats: '', imageURL: [''], status: 'Scheduled' });
       await loadAdminData();
     } catch (error) {
       setToast({ message: error.response?.data?.message || 'Could not create flight', type: 'error' });
@@ -99,6 +120,8 @@ const Admin = () => {
         if (selected.entity.totalSeats !== '') payload.totalSeats = Number(selected.entity.totalSeats);
         if (selected.entity.availableSeats !== '') payload.availableSeats = Number(selected.entity.availableSeats);
         payload.departureTime = selected.entity.departureTime;
+        payload.journeyTime = selected.entity.journeyTime;
+        payload.flightType = selected.entity.flightType;
         payload.status = selected.entity.status;
         if (selected.entity.imageURL?.length) payload.imageURL = selected.entity.imageURL;
       }
@@ -152,6 +175,7 @@ const Admin = () => {
         <div className="flex flex-wrap gap-3 border-b border-slate-200 pb-4">
           <button onClick={() => setTab('add')} className={`rounded-full px-5 py-2 text-sm font-semibold ${tab === 'add' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}>Add Content</button>
           <button onClick={() => setTab('manage')} className={`rounded-full px-5 py-2 text-sm font-semibold ${tab === 'manage' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}>Existing Articles</button>
+          <button onClick={() => setTab('bookings')} className={`rounded-full px-5 py-2 text-sm font-semibold ${tab === 'bookings' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}>Bookings Registry</button>
         </div>
 
         {tab === 'add' ? (
@@ -179,11 +203,18 @@ const Admin = () => {
                   <input value={flightPayload.origin} onChange={(e) => setFlightPayload({ ...flightPayload, origin: e.target.value })} placeholder="Origin" className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3" required />
                   <input value={flightPayload.destination} onChange={(e) => setFlightPayload({ ...flightPayload, destination: e.target.value })} placeholder="Destination" className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3" required />
                 </div>
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <input value={flightPayload.price} onChange={(e) => setFlightPayload({ ...flightPayload, price: e.target.value })} placeholder="Price" type="number" className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3" required />
                   <input value={flightPayload.totalSeats} onChange={(e) => setFlightPayload({ ...flightPayload, totalSeats: e.target.value })} placeholder="Total seats" type="number" className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3" required />
-                  <input value={flightPayload.departureTime} onChange={(e) => setFlightPayload({ ...flightPayload, departureTime: e.target.value })} type="datetime-local" className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3" required />
                 </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <input value={flightPayload.departureTime} onChange={(e) => setFlightPayload({ ...flightPayload, departureTime: e.target.value })} type="datetime-local" className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3" required />
+                  <input value={flightPayload.journeyTime} onChange={(e) => setFlightPayload({ ...flightPayload, journeyTime: e.target.value })} placeholder="Journey time (e.g. 2h 30m)" className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3" />
+                </div>
+                <select value={flightPayload.flightType} onChange={(e) => setFlightPayload({ ...flightPayload, flightType: e.target.value })} className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3">
+                  <option value="Domestic">Domestic</option>
+                  <option value="International">International</option>
+                </select>
                 <select value={flightPayload.status} onChange={(e) => setFlightPayload({ ...flightPayload, status: e.target.value })} className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3">
                   <option value="Scheduled">Scheduled</option>
                   <option value="Delayed">Delayed</option>
@@ -194,7 +225,7 @@ const Admin = () => {
               </form>
             </div>
           </div>
-        ) : (
+        ) : tab === 'manage' ? (
           <div className="mt-6 space-y-8">
             <div>
               <h2 className="text-xl font-semibold text-slate-900">Hotels</h2>
@@ -231,6 +262,7 @@ const Admin = () => {
                         <h3 className="text-lg font-semibold text-slate-900">{flight.airline}</h3>
                         <p className="text-sm text-slate-600">{flight.origin} → {flight.destination}</p>
                         <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-sm font-semibold ${flight.status === 'Cancelled' ? 'bg-red-100 text-red-700' : flight.status === 'Delayed' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{flight.status}</span>
+                        <p className="mt-2 text-sm text-slate-600">Type: <span className="font-semibold text-slate-900">{flight.flightType || 'Domestic'}</span></p>
                         <p className="mt-2 text-sm text-slate-600">Seats left: <span className="font-semibold text-slate-900">{flight.availableSeats}</span></p>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -251,6 +283,73 @@ const Admin = () => {
                 ))}
               </div>
             </div>
+          </div>
+        ) : (
+          <div className="mt-6 space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+                <p className="text-sm text-slate-500">Total bookings</p>
+                <p className="mt-3 text-3xl font-semibold text-slate-900">{bookings.length}</p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+                <p className="text-sm text-slate-500">Active bookings</p>
+                <p className="mt-3 text-3xl font-semibold text-slate-900">{bookings.filter((booking) => booking.status === 'confirmed' && new Date(booking.bookedDate) >= new Date()).length}</p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+                <p className="text-sm text-slate-500">Past bookings</p>
+                <p className="mt-3 text-3xl font-semibold text-slate-900">{bookings.filter((booking) => booking.status === 'confirmed' && new Date(booking.bookedDate) < new Date()).length}</p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft">
+                <p className="text-sm text-slate-500">Pending / cancelled</p>
+                <p className="mt-3 text-3xl font-semibold text-slate-900">{bookings.filter((booking) => booking.status !== 'confirmed').length}</p>
+              </div>
+            </div>
+
+            {bookingsLoading ? (
+              <Spinner />
+            ) : bookings.length ? (
+              <div className="space-y-5">
+                {bookings.map((booking) => {
+                  const now = new Date();
+                  const bookingDate = new Date(booking.bookedDate);
+                  const isActive = booking.status === 'confirmed' && bookingDate >= now;
+                  const isPast = booking.status === 'confirmed' && bookingDate < now;
+                  const tagLabel = booking.status === 'cancelled' ? 'Cancelled' : booking.status === 'pending' ? 'Pending' : isActive ? 'Active' : 'Past';
+                  const tagClass = booking.status === 'cancelled' ? 'bg-red-100 text-red-700' : booking.status === 'pending' ? 'bg-amber-100 text-amber-700' : isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700';
+
+                  return (
+                    <div key={booking._id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-soft">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h3 className="text-xl font-semibold text-slate-900">{booking.entity?.title || booking.entity?.airline || 'Booking'}</h3>
+                          <p className="mt-1 text-sm text-slate-600">
+                            {booking.entityType} reservation for {booking.guestsCount} guest(s){booking.roomsCount ? ` · ${booking.roomsCount} room(s)` : ''}
+                          </p>
+                          <p className="mt-2 text-sm text-slate-500">Travel date: {bookingDate.toLocaleDateString()}</p>
+                          <p className="mt-1 text-sm text-slate-500">Booked by: {booking.user?.name || booking.user?.email || 'Unknown user'}</p>
+                        </div>
+                        <div className="space-y-2 text-right">
+                          <span className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${tagClass}`}>{tagLabel}</span>
+                          <span className="block text-sm text-slate-500">Status: {booking.status}</span>
+                        </div>
+                      </div>
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-3xl bg-slate-50 p-4">
+                          <p className="text-sm text-slate-500">User email</p>
+                          <p className="mt-1 text-sm font-semibold text-slate-900">{booking.user?.email || 'Unknown'}</p>
+                        </div>
+                        <div className="rounded-3xl bg-slate-50 p-4">
+                          <p className="text-sm text-slate-500">Total amount</p>
+                          <p className="mt-1 text-sm font-semibold text-slate-900">${booking.totalPrice.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-4xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600 shadow-soft">No bookings have been made yet.</div>
+            )}
           </div>
         )}
       </div>
@@ -288,6 +387,11 @@ const Admin = () => {
                     <input value={selected.entity.availableSeats ?? ''} type="number" onChange={(e) => updateSelectedField('availableSeats', e.target.value)} className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3" />
                   </div>
                   <input value={new Date(selected.entity.departureTime).toISOString().slice(0, 16)} type="datetime-local" onChange={(e) => updateSelectedField('departureTime', e.target.value)} className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3" />
+                  <input value={selected.entity.journeyTime || ''} onChange={(e) => updateSelectedField('journeyTime', e.target.value)} placeholder="Journey time (e.g. 2h 30m)" className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3" />
+                  <select value={selected.entity.flightType || 'Domestic'} onChange={(e) => updateSelectedField('flightType', e.target.value)} className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <option value="Domestic">Domestic</option>
+                    <option value="International">International</option>
+                  </select>
                   <select value={selected.entity.status} onChange={(e) => updateSelectedField('status', e.target.value)} className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
                     <option value="Scheduled">Scheduled</option>
                     <option value="Delayed">Delayed</option>

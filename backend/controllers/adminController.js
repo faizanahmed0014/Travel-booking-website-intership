@@ -26,6 +26,8 @@ exports.createEntity = async (req, res) => {
         destination: payload.destination,
         price: payload.price,
         departureTime: payload.departureTime,
+        journeyTime: payload.journeyTime,
+        flightType: payload.flightType || 'Domestic',
         totalSeats: payload.totalSeats,
         availableSeats,
         status: payload.status || 'Scheduled',
@@ -67,6 +69,8 @@ exports.updateEntity = async (req, res) => {
       flight.destination = payload.destination || flight.destination;
       flight.price = payload.price ?? flight.price;
       flight.departureTime = payload.departureTime ? new Date(payload.departureTime) : flight.departureTime;
+      flight.journeyTime = payload.journeyTime ?? flight.journeyTime;
+      flight.flightType = payload.flightType || flight.flightType;
       flight.totalSeats = payload.totalSeats ?? flight.totalSeats;
       flight.availableSeats = payload.availableSeats ?? flight.availableSeats;
       flight.availableSeats = Math.min(flight.availableSeats, flight.totalSeats);

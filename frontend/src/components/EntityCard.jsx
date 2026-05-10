@@ -35,6 +35,7 @@ const EntityCard = ({ entity, type }) => {
         {isFlight ? (
           <>
             <p className="text-sm text-slate-600">Departs {new Date(entity.departureTime).toLocaleString()}</p>
+            <p className="text-sm text-slate-600">Type: <span className="font-semibold text-slate-900">{entity.flightType || 'Domestic'}</span></p>
             <p className="text-sm text-slate-600">Seats left: <span className="font-semibold text-slate-900">{entity.availableSeats ?? 0}</span></p>
           </>
         ) : (

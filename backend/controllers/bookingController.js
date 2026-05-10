@@ -1,6 +1,7 @@
 const Booking = require('../models/Booking');
 const Hotel = require('../models/Hotel');
 const Flight = require('../models/Flight');
+const User = require('../models/User');
 
 exports.createBooking = async (req, res) => {
   try {
@@ -106,5 +107,29 @@ exports.cancelBooking = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Could not cancel booking' });
+  }
+};
+
+exports.getBookingsForAdmin = async (req, res) => {
+  try {
+    const bookings = await Booking.find().sort({ bookedDate: 1 }).lean();
+    const enriched = await Promise.all(bookings.map(async (item) => {
+      const normalizedType = (item.entityType || '').toLowerCase();
+      const entity = normalizedType === 'hotel'
+        ? await Hotel.findById(item.entityId)
+        : normalizedType === 'flight'
+          ? await Flight.findById(item.entityId)
+          : null;
+      const user = await User.findById(item.userId);
+      return {
+        ...item,
+        entity,
+        user: user ? { _id: user._id, name: user.name, email: user.email } : null,
+      };
+    }));
+    res.json(enriched);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Could not fetch bookings' });
   }
 };

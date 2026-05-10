@@ -18,8 +18,8 @@ connectDB().then(() => seedAdmin());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
-app.use('/api', entityRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api', entityRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Travel Booking API is running' });

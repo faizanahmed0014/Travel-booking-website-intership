@@ -79,6 +79,8 @@ const EntityDetail = ({ entityType }) => {
         <div className="rounded-3xl border border-slate-200 bg-white p-4">Status<br /><span className={`inline-flex rounded-full px-3 py-1 ${entity.status === 'Cancelled' ? 'bg-red-100 text-red-700' : entity.status === 'Delayed' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{entity.status}</span></div>
         <div className="rounded-3xl border border-slate-200 bg-white p-4">Seats left<br /><span className="font-semibold text-slate-900">{entity.availableSeats ?? 0}</span></div>
         <div className="rounded-3xl border border-slate-200 bg-white p-4">Price per person<br /><span className="font-semibold text-slate-900">${entity.price}</span></div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-4">Journey time<br /><span className="font-semibold text-slate-900">{entity.journeyTime || 'Not specified'}</span></div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-4">Flight type<br /><span className="font-semibold text-slate-900">{entity.flightType || 'Domestic'}</span></div>
       </div>
     </>
   );
